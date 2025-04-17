@@ -2,34 +2,9 @@
   "name": "web-app",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "agent:run": "bash ../../scripts/agent_orchestrator.sh",
-    "build:fast": "node build_config.js",
-    "postbuild": "node scripts/generate_critical_css.js"
-  },
+  "...": "...",
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "tailwindcss": "latest",
-    "autoprefixer": "latest",
-    "postcss": "latest",
-    "shadcn-ui": "latest",
-    "langchain": "latest",
-    "@vercel/ai": "latest",
-    "@ducanh2912/next-pwa": "latest",
-    "flatbuffers": "latest"
-  },
-  "devDependencies": {
-    "eslint": "latest",
-    "eslint-config-next": "latest",
-    "esbuild": "latest",
-    "critical": "latest",
-    "glob": "latest",
-    "@playwright/test": "latest"
+    "...": "...",
+    "next-bundle-analyzer": "latest"
   }
 }

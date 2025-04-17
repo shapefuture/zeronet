@@ -1,0 +1,19 @@
+# ...existing jobs...
+  visual_testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Capture Screenshots
+        run: npx playwright test --grep @visual
+      - name: Download Baseline
+        run: gh artifact download -n screenshots-main -p ./screenshots/main || echo 'Baseline not found'
+      - name: Visual Diff
+        run: npx pixelmatch ./screenshots/main ./screenshots/pr ./reports/visual_diff.json --threshold 0.05
+      - name: Summarize Visual Diff
+        if: failure()
+        run: |
+          curl -XPOST $VLM_ENDPOINT \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -d '{"model":"'$VLM_MODEL_NAME'","prompt":"Summarize visual changes from ./reports/visual_diff.json"}' \
+            > summary.txt
+          gh pr comment ${{ github.event.pull_request.number }} -F summary.txt
