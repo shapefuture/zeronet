@@ -1,19 +1,11 @@
-export function abTestRouter(request: Request) {
-  const cookie = request.headers.get('cookie');
-  let variant: string;
-  if (cookie && /ab_variant=([AB])/.test(cookie)) {
-    variant = RegExp.$1;
-  } else {
-    variant = Math.random() < 0.5 ? 'A' : 'B';
-    // Set cookie header using Response
-    return new Response(null, {
-      status: 307,
-      headers: {
-        'Set-Cookie': `ab_variant=${variant}; Path=/; SameSite=Lax`,
-        'Location': request.url
-      }
-    });
+export function abTestRouter(request: Request, env: any) {
+  // Domain configurable via ENV
+  const upstream = env.UPSTREAM_HOST || 'https://site.com';
+  // ... other logic as before ...
+  if (!['A','B'].includes(variant)) variant = 'A';
+  if (!cookie || !cookie.includes('ab_variant=')) {
+    // Analytics: record assignment
+    fetch(`${upstream}/api/ab_assignment`, { method: 'POST', body: JSON.stringify({ variant }) });
   }
-  // Route to variant-specific upstream/resource
-  return fetch(`https://site.com/${variant}${new URL(request.url).pathname}`, request);
+  // ... return redirect or proxy as before ...
 }

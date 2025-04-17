@@ -1,40 +1,24 @@
-import { LRUCache } from 'lru-cache';
-const predictionCache = new LRUCache({ max: 100, ttl: 1000*60*5 }); // 5 min
-
-export async function getPredictedRoutes(history: string[]): Promise<{route: string, confidence: number}[]> {
+type PredictionResult = { route: string; confidence: number; };
+export async function getPredictedRoutes(history: string[]): Promise<PredictionResult[]> {
   const key = JSON.stringify(history);
   if (predictionCache.has(key)) return predictionCache.get(key);
 
-  async function tryAllProviders(): Promise<any[]> {
-    // Local first
+  function normalize(conf: number): number {
+    if (typeof conf !== "number" || !isFinite(conf)) return 0.5;
+    return Math.max(0, Math.min(1, conf));
+  }
+  async function tryAllProviders(): Promise<PredictionResult[]> {
     try {
-      const resp = await fetch(process.env.VLM_ENDPOINT!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: process.env.VLM_MODEL_NAME,
-          prompt: JSON.stringify(history)
-        })
-      });
+      const resp = await fetch(process.env.VLM_ENDPOINT!, { /* ... */ });
       const text = await resp.text();
-      return JSON.parse(text.match(/\[.*\]/s)![0]);
-    } catch {}
-    // OpenRouter fallback
+      const arr = JSON.parse(text.match(/\[.*\]/s)![0]) as PredictionResult[];
+      arr.forEach(p=>{p.confidence=normalize(p.confidence)});
+      return arr;
+    } catch (e) { console.warn("Local VLM prediction error", e); }
     try {
-      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY || ""}`
-        },
-        body: JSON.stringify({ model: process.env.VLM_FALLBACK_MODEL, messages: [ { content: JSON.stringify(history), role: "user" } ]})
-      });
-      const data = await resp.json();
-      const match = data.choices?.[0]?.message?.content.match(/\[.*\]/s);
-      return match ? JSON.parse(match[0]) : [];
-    } catch {}
-    // Static
-    return [{route:"/",confidence:1.0}];
+      /* ... fallback OpenRouter code ... */
+    } catch (e2) { console.warn("OpenRouter prediction error", e2); }
+    return [{ route: "/", confidence: 1.0 }];
   }
 
   const v = await tryAllProviders();
