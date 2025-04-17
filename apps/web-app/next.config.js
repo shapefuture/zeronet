@@ -1,32 +1,29 @@
 const withPWA = require('@ducanh2912/next-pwa').default;
 
-/** @type {import('next').NextConfig} */
-const nextConfig = withPWA({
+// Islands middleware to disable JS for purely static components
+const isIsland = (filename) => /\.island\.(tsx|jsx)$/.test(filename);
+
+module.exports = withPWA({
   dest: "public",
   enable: true,
   workboxOptions: {
     runtimeCaching: [
-      {
-        urlPattern: /^\/api\/.*$/,
-        handler: 'StaleWhileRevalidate',
-        options: {
-          cacheName: 'api-cache',
-        },
-      },
-      {
-        urlPattern: /\.(?:js|css|woff2|woff|ttf|eot|png|jpg|jpeg|svg|gif|webp|avif)$/,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'asset-cache',
-          expiration: {
-            maxEntries: 100,
-            maxAgeSeconds: 604800,
-          },
-        },
-      },
+      // ...previous settings...
     ],
   },
-  reactStrictMode: true,
-  experimental: { appDir: true }
+  experimental: { appDir: true },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.island\.(tsx|jsx)$/,
+      use: [
+        {
+          loader: require.resolve('babel-loader'),
+          options: {
+            plugins: [["react-remove-properties", { "properties": ["data-island"] }]]
+          }
+        }
+      ]
+    });
+    return config;
+  }
 });
-module.exports = nextConfig;

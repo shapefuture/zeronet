@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'MyOptimized';
+  src: url('/fonts/optimized.woff2') format('woff2');
+  font-display: optional;
+}
+
+body {
+  font-family: 'MyOptimized', system-ui, sans-serif;
+}
