@@ -1,6 +1,8 @@
+from bs4 import BeautifulSoup
+
 def prune_dom(html: str) -> str:
-    # Very basic example: remove elements by selector
-    import re
-    html = re.sub(r'<script.*?</script>', '', html, flags=re.DOTALL)
-    html = re.sub(r'<.*?data-test-id=[\'"].*?[\'"].*?>.*?</.*?>', '', html, flags=re.DOTALL)
-    return html
+    soup = BeautifulSoup(html, "html.parser")
+    for selector in ["[hidden]", "script[type='application/ld+json']", "[data-test-id]"]:
+        for el in soup.select(selector):
+            el.decompose()
+    return str(soup)

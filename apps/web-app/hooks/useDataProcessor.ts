@@ -1,23 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import * as Comlink from "comlink";
 
 export function useDataProcessor() {
-  const workerRef = useRef<any>(null);
+  const [api, setApi] = useState<any>(null);
 
   useEffect(() => {
-    workerRef.current = new Worker(
+    const worker = new Worker(
       new URL("../workers/dataProcessor.ts", import.meta.url),
       { type: "module" }
     );
-    // Clean up
-    return () => workerRef.current && workerRef.current.terminate();
+    setApi(Comlink.wrap(worker));
+    return () => worker.terminate();
   }, []);
 
-  return async (data: number[]) => {
-    if (workerRef.current) {
-      const api = Comlink.wrap<{ processData(data: number[]): Promise<number> }>(workerRef.current);
-      return await api.processData(data);
-    }
-    return null;
-  }
+  return api;
 }

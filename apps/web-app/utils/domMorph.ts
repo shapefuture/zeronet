@@ -1,10 +1,14 @@
-// DOM morphing utility (super simple for demo)
-// In production, would use a real diff/morph algo
+// Minimal real DOM morphing with DOM-diff and patching (not just replace all)
+import morphdom from "morphdom";
 
 export function morphDom(target: HTMLElement, nextHtml: string) {
-  // Replace only changed children
   const temp = document.createElement("div");
   temp.innerHTML = nextHtml;
-  while (target.firstChild) target.removeChild(target.firstChild);
-  while (temp.firstChild) target.appendChild(temp.firstChild);
+  // Use morphdom: https://github.com/patrick-steele-idem/morphdom
+  morphdom(target, temp, {
+    onBeforeNodeAdded: () => true,
+    onNodeDiscarded: () => true,
+    onBeforeElUpdated: () => true,
+    childrenOnly: true
+  });
 }
