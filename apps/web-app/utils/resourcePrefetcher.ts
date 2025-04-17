@@ -1,15 +1,14 @@
-import { llmRoutePrediction } from "../predictor/llm_predictor";
-import { sendPrefetchTriggered } from "./analytics";
+import { getPredictedRoutes } from "../predictor/enhanced_llm_predictor";
 
-export async function prefetchResourcesWithLLM(history: string[]) {
-  const predictions = await llmRoutePrediction(history);
+export async function prefetchResourcesWithPrerender(history: string[]) {
+  const predictions = await getPredictedRoutes(history);
   predictions.forEach(({ route, confidence }) => {
     if (confidence > 0.7) {
+      // For supported browsers, trigger prerender for near-instant navigation
       const link = document.createElement("link");
-      link.rel = "prefetch";
+      link.rel = "prerender";
       link.href = route;
       document.head.appendChild(link);
-      sendPrefetchTriggered(route, confidence);
     }
   });
 }
