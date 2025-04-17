@@ -20,7 +20,7 @@ jobs:
           node-version: 18
       - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9.3.0
       - name: Install dependencies
         run: pnpm install
       - name: Install Playwright
