@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "agent:run": "bash ../../scripts/agent_orchestrator.sh"
   },
   "dependencies": {
     "next": "latest",
