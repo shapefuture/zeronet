@@ -1,4 +1,4 @@
-# relevant sections only show upgrade:
+# ...main.yml...
       - name: Archive build
         uses: actions/upload-artifact@v4
         with:
@@ -9,3 +9,4 @@
         with:
           name: web-build
           path: .next
+# Repeat as needed for every `upload-artifact` and `download-artifact`.

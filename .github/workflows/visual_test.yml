@@ -1,37 +1,35 @@
-name: Visual Regression Testing
+name: Visual Testing
 
 on:
+  push:
+    branches: [main]
   pull_request:
-    paths:
-      - 'apps/web-app/**'
-      - '.github/workflows/visual_test.yml'
+    branches: [main]
+
+env:
+  VLM_ENDPOINT: ${{ secrets.VLM_ENDPOINT }}
+  VLM_MODEL_NAME: ${{ secrets.VLM_MODEL_NAME }}
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
 jobs:
   visual_testing:
     runs-on: ubuntu-latest
-    env:
-      VLM_ENDPOINT: ${{ secrets.VLM_ENDPOINT }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      VLM_MODEL_NAME: ${{ secrets.VLM_MODEL_NAME }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Install deps
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-
-      - name: Build
-        run: pnpm --filter web-app build
-
-      - name: Visual test - Playwright
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      - name: Build web-app
+        run: pnpm --filter web-app... build
+      - name: Run Visual Tests
         run: npx playwright test --grep @visual
-
-      - name: [Optional] Upload Screenshots
+      - name: Upload Screenshots
         uses: actions/upload-artifact@v4
         with:
           name: pr-screenshots
