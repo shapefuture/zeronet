@@ -1,4 +1,3 @@
-// Minimal oclif-style CLI tool for snapshots
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 
@@ -11,10 +10,21 @@ if (cmd === "generate") {
     .then(buf => fs.writeFileSync(outfile, Buffer.from(buf)))
     .then(() => console.log(`Snapshot saved to ${outfile}`));
 } else if (cmd === "diff") {
-  const [a, b] = args;
-  // Diff logic (call Python snapshot_diff via child_process, placeholder)
-  // ...
-  console.log(`Diff (not implemented) for:`, a, b);
+  const [fileA, fileB, patchFile] = args;
+  // Minimal binary diff for FlatBuffers
+  const a = fs.readFileSync(fileA);
+  const b = fs.readFileSync(fileB);
+  let patch = [];
+  for (let i = 0; i < Math.min(a.length, b.length); ++i) {
+    if (a[i] !== b[i]) patch.push(i, b[i]);
+  }
+  fs.writeFileSync(patchFile, Buffer.from(patch));
+  console.log(`Diff patch written to ${patchFile}`);
+} else if (cmd === "deploy_delta") {
+  const [patchFile, apiUrl] = args;
+  const patch = fs.readFileSync(patchFile);
+  fetch(apiUrl, { method: "POST", body: patch });
+  console.log(`Delta patch sent to ${apiUrl}`);
 } else {
-  console.log("snapshotctl [generate|diff] url outfile");
+  console.log("snapshotctl [generate|diff|deploy_delta] ...");
 }
