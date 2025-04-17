@@ -3,77 +3,38 @@ export default {
     try {
       const url = new URL(request.url);
       const userId = url.searchParams.get("id");
-      
-      if (!userId || !/^\d+$/.test(userId)) {
-        return new Response(JSON.stringify({ error: "Invalid user ID" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      // Fetch both endpoints in parallel with timeout
+      if (!userId || !/^\d+$/.test(userId)) 
+        return new Response(JSON.stringify({error:"Invalid user ID"}), {status:400, headers:{"content-type":"application/json"}});
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
-      
+      const timeout = setTimeout(() => controller.abort(), 2000);
       try {
         const [profileRes, prefsRes] = await Promise.all([
-          fetch(`https://api.example.com/users/${userId}`, { 
-            signal: controller.signal,
-            cf: { cacheTtl: 60, cacheEverything: true }
-          }),
-          fetch(`https://api.example.com/users/${userId}/preferences`, { 
-            signal: controller.signal,
-            cf: { cacheTtl: 60, cacheEverything: true }
-          })
+          fetch(`https://api.example.com/users/${userId}`, { signal:controller.signal }),
+          fetch(`https://api.example.com/users/${userId}/preferences`, { signal:controller.signal })
         ]);
-        
         clearTimeout(timeout);
-        
-        if (!profileRes.ok) {
-          throw new Error(`Profile API error: ${profileRes.status}`);
-        }
-        
-        if (!prefsRes.ok) {
-          throw new Error(`Preferences API error: ${prefsRes.status}`);
-        }
-        
+        if (!profileRes.ok || !prefsRes.ok) throw new Error("Upstream API failed");
         const profile = await profileRes.json();
         const prefs = await prefsRes.json();
-        
-        // Construct minimal response with only needed fields
-        const response = {
+        return new Response(JSON.stringify({
           id: userId,
           displayName: profile.displayName,
           avatar: profile.avatarUrl,
-          theme: prefs.theme || "default",
+          theme: prefs.theme ?? "default",
           notifications: !!prefs.enableNotifications
-        };
-        
-        return new Response(JSON.stringify(response), {
+        }), {
           headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=86400",
-            "Timing-Allow-Origin": "*"
+            "content-type": "application/json",
+            "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=86400"
           }
         });
-      } catch (apiError) {
+      } catch (apiErr) {
         clearTimeout(timeout);
-        throw apiError; // Re-throw for outer handler
+        throw apiErr;
       }
-    } catch (error) {
-      // Log error, then respond gracefully
-      console.error(`[aggregateUserData] ${error.message}`);
-      
-      return new Response(JSON.stringify({
-        error: "Service temporarily unavailable",
-        retry: true
-      }), {
-        status: error.message.includes("API error") ? 502 : 500,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store"
-        }
-      });
+    } catch (err) {
+      console.error(`[aggregateUserData] ${err && err.message}`);
+      return new Response(JSON.stringify({error:"Service unavailable",retry:true}),{status:502,headers:{"content-type":"application/json"}});
     }
   }
 };
