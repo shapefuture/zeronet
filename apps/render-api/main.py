@@ -8,26 +8,31 @@ from otel_trace import tracer
 
 app = FastAPI()
 
-@app.get("/health")
-def health():
-    return {"status": "OK"}
-
 @app.get("/")
 def read_root():
     return {"msg": "Ultra-Low Latency Render API"}
 
 @app.post("/render_snapshot")
-def render_snapshot(req: SnapshotRequest, fastapi_res: Response, request: Request = None):
+def render_snapshot(req: SnapshotRequest, response: Response, request: Request = None):
     with tracer.start_as_current_span("render_snapshot"):
+        # Compose snapshot HTML
         html_snapshot = f"<html><body><h1>Snapshot of {req.url}</h1></body></html>"
-        pruned = prune_dom(html_snapshot)
-        fbs_bytes = serialize_dom_snapshot({"url": req.url, "html": pruned, "metadata": "{}"})
-        set_microcache_headers(fastapi_res, fbs_bytes)
-        # Early hints and advanced cache/headers
-        fastapi_res.headers["Link"] = '</fonts/optimized.woff2>; rel=preload; as=font; crossorigin, </styles/globals.css>; rel=preload; as=style'
-        fastapi_res.status_code = 200
+        pruned_html = prune_dom(html_snapshot)
+        # FlatBuffers-encode the DOM snapshot
+        fbs_bytes = serialize_dom_snapshot({
+            "url": req.url,
+            "html": pruned_html,
+            "metadata": "{}"
+        })
+        # Set cache headers and ETag
+        set_microcache_headers(response, fbs_bytes)
+        # Early Hints/Link header if supported
+        response.headers["Link"] = (
+            '</fonts/optimized.woff2>; rel=preload; as=font; crossorigin, '
+            '</styles/globals.css>; rel=preload; as=style'
+        )
         return Response(
             content=fbs_bytes,
             media_type="application/octet-stream",
-            headers=fastapi_res.headers
+            headers=response.headers
         )

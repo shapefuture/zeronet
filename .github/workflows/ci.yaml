@@ -1,19 +1,62 @@
-# ...existing jobs...
-  visual_testing:
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Capture Screenshots
-        run: npx playwright test --grep @visual
-      - name: Download Baseline
-        run: gh artifact download -n screenshots-main -p ./screenshots/main || echo 'Baseline not found'
-      - name: Visual Diff
-        run: npx pixelmatch ./screenshots/main ./screenshots/pr ./reports/visual_diff.json --threshold 0.05
-      - name: Summarize Visual Diff
-        if: failure()
-        run: |
-          curl -XPOST $VLM_ENDPOINT \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-            -d '{"model":"'$VLM_MODEL_NAME'","prompt":"Summarize visual changes from ./reports/visual_diff.json"}' \
-            > summary.txt
-          gh pr comment ${{ github.event.pull_request.number }} -F summary.txt
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Lint & Typecheck
+        run: pnpm lint
+      - name: Build
+        run: pnpm build
+      - name: Test
+        run: pnpm test
+      - name: Upload web-app build
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-app-build
+          path: apps/web-app/.next
+
+  visual_testing:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: pnpm install
+      - name: Setup Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Visual Regression Tests
+        run: npx playwright test --grep "@visual" --project=chromium
+        env:
+          CI: true
+      - name: Upload Artifacts (Screenshots/Diffs)
+        uses: actions/upload-artifact@v3
+        with:
+          name: pr-screenshots
+          path: |
+            screenshots/
+            apps/web-app/Playwright/
