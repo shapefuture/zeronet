@@ -1,0 +1,9 @@
+namespace UISnapshot;
+
+table DOMSnapshot {
+  url:string;
+  html:string;
+  timestamp:ulong;
+  metadata:string;
+}
+root_type DOMSnapshot;
