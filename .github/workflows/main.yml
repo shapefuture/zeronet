@@ -8,6 +8,9 @@ on:
 
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
+  VLM_ENDPOINT: ${{ secrets.VLM_ENDPOINT }}
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  VLM_MODEL_NAME: ${{ secrets.VLM_MODEL_NAME }}
 
 jobs:
   build:
@@ -32,7 +35,7 @@ jobs:
       - name: Bundle Analysis
         run: pnpm analyze || true
       - name: Archive build
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: web-build
           path: apps/web-app/.next
@@ -45,15 +48,47 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 8
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: web-build
           path: .next
       - name: Lighthouse CI
         run: pnpm --filter web-app lhci:autorun
 
+  visual_testing:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      VLM_ENDPOINT: ${{ secrets.VLM_ENDPOINT }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      VLM_MODEL_NAME: ${{ secrets.VLM_MODEL_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .next
+      - name: Capture Screenshots
+        run: npx playwright test --grep @visual
+      - name: Download Baseline
+        run: gh artifact download -n screenshots-main -p ./screenshots/main || echo 'Baseline not found'
+      - name: Visual Diff
+        run: npx pixelmatch ./screenshots/main ./screenshots/pr ./reports/visual_diff.json --threshold 0.05
+      - name: Summarize Visual Diff
+        if: failure()
+        run: |
+          curl -XPOST "$VLM_ENDPOINT" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+            -d '{"model":"'$VLM_MODEL_NAME'","prompt":"Summarize visual changes from ./reports/visual_diff.json"}' \
+            > summary.txt
+          gh pr comment ${{ github.event.pull_request.number }} -F summary.txt
+
   deploy:
-    needs: lighthouse
+    needs: [lighthouse, visual_testing]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -61,11 +96,13 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 8
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: web-build
           path: .next
       - name: Deploy to Cloudflare
-        run: pnpm --filter web-app deploy:cloudflare # e.g. runs wrangler publish
+        run: pnpm --filter web-app deploy:cloudflare # replace with actual wrangler or deploy script
       - name: Health Check
-        run: curl -sf https://your-cloudflare-domain.com/health | grep OK
+        run: |
+          # Replace below with the actual domain after deployment
+          curl -sf ${DEPLOY_DOMAIN:-https://your-actual-domain.com/health} | grep -i OK
