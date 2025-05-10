@@ -1,0 +1,71 @@
+name: Main CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Build packages
+        run: pnpm build
+      - name: Lint & Typecheck
+        run: pnpm lint
+      - name: Test
+        run: pnpm test
+      - name: Bundle Analysis
+        run: pnpm analyze || true
+      - name: Archive build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: apps/web-app/.next
+
+  lighthouse:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .next
+      - name: Lighthouse CI
+        run: pnpm --filter web-app lhci:autorun
+
+  deploy:
+    needs: lighthouse
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.3.0
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .next
+      - name: Deploy to Cloudflare
+        run: pnpm --filter web-app deploy:cloudflare # e.g. runs wrangler publish
+      - name: Health Check
+        run: curl -sf https://your-cloudflare-domain.com/health | grep OK

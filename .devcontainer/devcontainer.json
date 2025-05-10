@@ -1,0 +1,24 @@
+{
+  "name": "zeronet Dev",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/pnpm:2": { "version": "9.3.0" }
+  },
+  "postCreateCommand": "pnpm install --no-frozen-lockfile && pnpm build",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "esbenp.prettier-vscode",
+        "GitHub.vscode-pull-request-github"
+      ]
+    }
+  },
+  "forwardPorts": [3000, 8000, 6006],
+  "remoteUser": "node"
+}
