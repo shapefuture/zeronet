@@ -9,7 +9,7 @@
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:react/recommended", "plugin:prettier/recommended"],
   "plugins": ["@typescript-eslint", "react", "prettier"],
   "rules": {
-    "no-console": "off", // allow for verbose logging
+    "no-console": "off",
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/explicit-module-boundary-types": "warn",

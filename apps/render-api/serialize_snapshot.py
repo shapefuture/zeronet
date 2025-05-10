@@ -25,5 +25,5 @@ def serialize_dom_snapshot(data: dict) -> bytes:
     DOMSnapshot.DOMSnapshotAddMetadata(builder, metadata_off)
     snap = DOMSnapshot.DOMSnapshotEnd(builder)
     builder.Finish(snap)
-    logging.info(f"Snapshot serialized, size={builder.Output().__len__()} bytes")
+    logging.info(f"Snapshot serialized, size={builder.Output().__len__()} bytes, url={url}")
     return bytes(builder.Output())

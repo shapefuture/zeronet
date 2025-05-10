@@ -1,5 +1,6 @@
 import logging
 import sys
+import traceback
 
 def setup_logging():
     logging.basicConfig(
@@ -10,3 +11,4 @@ def setup_logging():
 
 def log_exception(logger, msg: str, exc: Exception):
     logger.error(f"{msg}: {exc}", exc_info=True)
+    logger.debug(''.join(traceback.format_exception(None, exc, exc.__traceback__)))
