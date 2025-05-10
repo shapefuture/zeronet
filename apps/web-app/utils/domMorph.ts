@@ -1,34 +1,30 @@
 import morphdom from 'morphdom';
-import { log, LogLevel } from './logger';
+import { logVerbose, logError, logInfo } from './verboseLogger';
 
 let lastMorphDuration = 0;
 export function getLastMorphDuration() { return lastMorphDuration; }
 
 export function morphDom(target: HTMLElement, nextHtml: string) {
   if (!target) {
-    log(LogLevel.ERROR, "morphDom called with null target", { nextHtml });
+    logError("morphDom called with null/undefined target");
     return false;
   }
   const temp = document.createElement("div");
   temp.innerHTML = nextHtml;
-  const t0 = performance.now();
   try {
-    log(LogLevel.DEBUG, "Starting DOM morph", { target, nextHtml });
+    const t0 = performance.now();
     morphdom(target, temp, {
       childrenOnly: true,
-      onBeforeElUpdated: (fromEl, toEl) => {
-        const shouldSkip = fromEl.isEqualNode && fromEl.isEqualNode(toEl);
-        if (shouldSkip) log(LogLevel.DEBUG, "Skipping unchanged node", fromEl);
-        return !shouldSkip;
-      },
+      onBeforeElUpdated: (fromEl, toEl) =>
+        (fromEl.isEqualNode && fromEl.isEqualNode(toEl)) ? false : true,
       getNodeKey: node =>
         (node.nodeType === 1 && (node as any).getAttribute('data-morph-key')) || undefined
     });
     lastMorphDuration = performance.now() - t0;
-    log(LogLevel.INFO, `DOM morph completed in ${lastMorphDuration} ms`);
+    logVerbose(`Morph duration: ${lastMorphDuration}ms`, {target, nextHtml});
     return true;
-  } catch (e) {
-    log(LogLevel.ERROR, "DOM morphing failed", e, { target, nextHtml });
+  } catch (err) {
+    logError("morphDom failed", err, { target, nextHtml });
     return false;
   }
 }

@@ -8,3 +8,11 @@ export function logError(...args: any[]) {
   // eslint-disable-next-line no-console
   console.error("[zeronet:error]", ...args);
 }
+export function logInfo(...args: any[]) {
+  // eslint-disable-next-line no-console
+  console.info("[zeronet:info]", ...args);
+}
+export function logWarn(...args: any[]) {
+  // eslint-disable-next-line no-console
+  console.warn("[zeronet:warn]", ...args);
+}

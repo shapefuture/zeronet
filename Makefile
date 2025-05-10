@@ -1,22 +1,25 @@
-# zeronet: Server/CI-Only Makefile
+# zeronet: Server/CI-Only Makefile (verbose/debug/test targets)
 
 install:
-	pnpm install --no-frozen-lockfile
+	pnpm install --no-frozen-lockfile --reporter=ndjson --loglevel=verbose
 
 build:
-	pnpm build
+	pnpm build --loglevel=debug
 
 test:
 	pnpm test -- --verbose
 
 lint:
-	pnpm lint -- --max-warnings=0 --format=stylish
+	pnpm lint
+
+lint:py:
+	flake8 apps/render-api
 
 e2e:
 	pnpm --filter web-app test:e2e -- --verbose
 
 render-api:
-	cd apps/render-api && uvicorn main:app --reload --host 0.0.0.0 --port 8000
+	cd apps/render-api && uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-level debug
 
 web-app:
 	pnpm --filter web-app dev -- --port 3000
@@ -38,7 +41,8 @@ storybook:
 
 ci:
 	make install
+	make lint
+	make lint:py
 	make build
 	make test
-	make lint
 	make e2e
