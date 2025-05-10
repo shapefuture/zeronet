@@ -1,19 +1,18 @@
 import morphdom from 'morphdom';
-import { log, LogLevel } from './logger';
+import { logVerbose, logError } from './verboseLogger';
 
 let lastMorphDuration = 0;
 export function getLastMorphDuration() { return lastMorphDuration; }
 
 export function morphDom(target: HTMLElement, nextHtml: string) {
   if (!target) {
-    log(LogLevel.ERROR, "morphDom called with null target");
+    logError("morphDom called with null/undefined target");
     return false;
   }
   const temp = document.createElement("div");
   temp.innerHTML = nextHtml;
-  const t0 = performance.now();
   try {
-    log(LogLevel.DEBUG, "Starting DOM morph", { target, nextHtml });
+    const t0 = performance.now();
     morphdom(target, temp, {
       childrenOnly: true,
       onBeforeElUpdated: (fromEl, toEl) =>
@@ -22,10 +21,10 @@ export function morphDom(target: HTMLElement, nextHtml: string) {
         (node.nodeType === 1 && (node as any).getAttribute('data-morph-key')) || undefined
     });
     lastMorphDuration = performance.now() - t0;
-    log(LogLevel.INFO, `DOM morph completed in ${lastMorphDuration} ms`);
+    logVerbose(`Morph duration: ${lastMorphDuration}ms`, {target, nextHtml});
     return true;
-  } catch (e) {
-    log(LogLevel.ERROR, "DOM morphing failed", e);
+  } catch (err) {
+    logError("morphDom failed", err, { target, nextHtml });
     return false;
   }
 }

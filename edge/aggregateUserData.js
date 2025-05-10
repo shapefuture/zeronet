@@ -5,20 +5,21 @@
  */
 export default {
   async fetch(request, env, ctx) {
-    // Now with type annotations above and config extraction
     const config = {
       profileApi: env.PROFILE_API || "https://api.example.com/users",
-      prefsApi: env.PREFS_API || "https://api.example.com/users", // could distinguish in prod
+      prefsApi: env.PREFS_API || "https://api.example.com/users",
       timeoutMs: Number(env.AGG_TIMEOUT_MS ?? 2000),
     };
     try {
       const url = new URL(request.url);
       const userId = url.searchParams.get("id");
-      if (!userId || !/^\d+$/.test(userId))
+      if (!userId || !/^\d+$/.test(userId)) {
+        console.error("[zeronet:edge] Invalid user ID:", userId);
         return new Response(JSON.stringify({ error: "Invalid user ID" }), {
           status: 400,
           headers: { "content-type": "application/json" },
         });
+      }
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
       try {
@@ -30,9 +31,13 @@ export default {
         ]);
         clearTimeout(timeout);
 
-        if (!profileRes.ok || !prefsRes.ok) throw new Error("Upstream API failed");
+        if (!profileRes.ok || !prefsRes.ok) {
+          console.error("[zeronet:edge] Upstream API failed", { profileRes, prefsRes });
+          throw new Error("Upstream API failed");
+        }
         const profile = await profileRes.json();
         const prefs = await prefsRes.json();
+        console.debug("[zeronet:edge] Aggregated data", {profile, prefs});
         return new Response(
           JSON.stringify({
             id: userId,
@@ -50,9 +55,11 @@ export default {
         );
       } catch (apiErr) {
         clearTimeout(timeout);
+        console.error("[zeronet:edge] API error", apiErr);
         throw apiErr;
       }
     } catch (err) {
+      console.error("[zeronet:edge] Service unavailable", err);
       return new Response(JSON.stringify({ error: "Service unavailable", retry: true }), {
         status: 502,
         headers: { "content-type": "application/json" },
