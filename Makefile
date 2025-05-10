@@ -1,4 +1,4 @@
-# zeronet: Server/CI-Only Makefile (verbose/debug/test targets)
+# zeronet: Server/CI-Only Makefile (maximum verbosity for debugging)
 
 install:
 	pnpm install --no-frozen-lockfile --reporter=ndjson --loglevel=verbose
@@ -10,7 +10,7 @@ test:
 	pnpm test -- --verbose
 
 lint:
-	pnpm lint
+	pnpm lint -- --max-warnings=0 --format=stylish
 
 lint:py:
 	flake8 apps/render-api

@@ -1,4 +1,5 @@
 export enum LogLevel {
+  TRACE = "TRACE",
   DEBUG = "DEBUG",
   INFO = "INFO",
   WARN = "WARN",
@@ -11,5 +12,6 @@ export function log(level: LogLevel, msg: string, ...args: any[]) {
   if (level === LogLevel.ERROR) console.error(`[${time}] [${level}]`, msg, ...args, new Error().stack);
   else if (level === LogLevel.WARN) console.warn(`[${time}] [${level}]`, msg, ...args);
   else if (level === LogLevel.INFO) console.info(`[${time}] [${level}]`, msg, ...args);
-  else console.debug(`[${time}] [${level}]`, msg, ...args);
+  else if (level === LogLevel.DEBUG) console.debug(`[${time}] [${level}]`, msg, ...args);
+  else console.trace(`[${time}] [${level}]`, msg, ...args);
 }

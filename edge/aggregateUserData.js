@@ -14,7 +14,7 @@ export default {
       const url = new URL(request.url);
       const userId = url.searchParams.get("id");
       if (!userId || !/^\d+$/.test(userId)) {
-        console.error("[zeronet:edge] Invalid user ID:", userId);
+        console.error("[zeronet:edge] Invalid user ID:", userId, "Request:", request.url);
         return new Response(JSON.stringify({ error: "Invalid user ID" }), {
           status: 400,
           headers: { "content-type": "application/json" },
@@ -55,11 +55,11 @@ export default {
         );
       } catch (apiErr) {
         clearTimeout(timeout);
-        console.error("[zeronet:edge] API error", apiErr);
+        console.error("[zeronet:edge] API error", apiErr, "Request:", request.url);
         throw apiErr;
       }
     } catch (err) {
-      console.error("[zeronet:edge] Service unavailable", err);
+      console.error("[zeronet:edge] Service unavailable", err, "Request:", request.url);
       return new Response(JSON.stringify({ error: "Service unavailable", retry: true }), {
         status: 502,
         headers: { "content-type": "application/json" },
