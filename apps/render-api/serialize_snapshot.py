@@ -1,17 +1,17 @@
 import flatbuffers
 import time
 from UISnapshot import DOMSnapshot
-
-class SnapshotDataError(Exception):
-    pass
+from logging_utils import logging
 
 def serialize_dom_snapshot(data: dict) -> bytes:
-    # Validate types
+    logging.debug(f"Serializing snapshot data: {data}")
     if not isinstance(data, dict):
-        raise SnapshotDataError("Snapshot data must be a dict")
+        logging.error("Snapshot data must be a dict")
+        raise ValueError("Snapshot data must be a dict")
     for k in ("url", "html", "metadata"):
         if not isinstance(data.get(k, ''), str):
-            raise SnapshotDataError(f"Snapshot '{k}' must be a string")
+            logging.error(f"Snapshot '{k}' must be a string")
+            raise ValueError(f"Snapshot '{k}' must be a string")
     url, html, metadata = data["url"], data["html"], data["metadata"]
     timestamp = int(time.time())
     builder = flatbuffers.Builder(1024)
@@ -25,4 +25,5 @@ def serialize_dom_snapshot(data: dict) -> bytes:
     DOMSnapshot.DOMSnapshotAddMetadata(builder, metadata_off)
     snap = DOMSnapshot.DOMSnapshotEnd(builder)
     builder.Finish(snap)
+    logging.info(f"Snapshot serialized, size={builder.Output().__len__()} bytes")
     return bytes(builder.Output())

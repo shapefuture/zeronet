@@ -7,13 +7,13 @@ build:
 	pnpm build
 
 test:
-	pnpm test
+	pnpm test -- --verbose
 
 lint:
-	pnpm lint
+	pnpm lint -- --max-warnings=0 --format=stylish
 
 e2e:
-	pnpm --filter web-app test:e2e
+	pnpm --filter web-app test:e2e -- --verbose
 
 render-api:
 	cd apps/render-api && uvicorn main:app --reload --host 0.0.0.0 --port 8000
