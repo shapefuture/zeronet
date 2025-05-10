@@ -1,10 +1,11 @@
 {
-  "name": "midscene-monorepo",
+  "name": "zeronet",
   "private": true,
   "version": "0.1.0",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "tools/*"
   ],
   "devDependencies": {
     "turbo": "latest"

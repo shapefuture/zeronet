@@ -1,4 +1,4 @@
-# Project Structure Overview (Ultra-Low-Latency Web Delivery)
+# Project Structure Overview (zeronet)
 
 _Last updated: [today's date]_
 
@@ -9,7 +9,7 @@ This document details the structure and features actually implemented as of this
 ## Apps
 
 - **`apps/web-app/`**  
-  Next.js app (Ultra Latency UI)  
+  Next.js app (zeronet UI)  
   - Tailwind, Shadcn UI  
   - Critical CSS extraction
   - PWA & Service Worker (next-pwa)
@@ -24,7 +24,7 @@ This document details the structure and features actually implemented as of this
   - Storybook DX docs (`.storybook/`)
 
 - **`apps/render-api/`**  
-  FastAPI Python backend (SSR Snapshots)  
+  FastAPI Python backend (SSR Snapshots for zeronet)  
   - FlatBuffers serialization (`serialize_snapshot.py`)
   - Prune DOM via real parsing (`prune_dom.py`)
   - Deterministic render and binary/structural diff (`deterministic_render.py`, `snapshot_diff.py`)
@@ -111,3 +111,4 @@ This document details the structure and features actually implemented as of this
 - [x] Progressive enhancement & analytics
 
 *For a full phase-to-implementation mapping or specific code references, see PLAN.MD and README.md.*
+

@@ -1,5 +1,5 @@
 {
-  "name": "Ultra Web Dev",
+  "name": "zeronet Dev",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {},

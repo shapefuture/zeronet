@@ -1,4 +1,4 @@
-# Ultra-Low-Latency Web: Server/CI-Only Makefile
+# zeronet: Server/CI-Only Makefile
 
 install:
 	pnpm install --no-frozen-lockfile
